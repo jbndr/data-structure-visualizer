@@ -15,6 +15,11 @@ function init() {
     createMeshes();
     createRenderer();
 
+    renderer.setAnimationLoop( () => {
+        update();
+        render();
+      } );
+
 }
 
 function createCamera() {
@@ -52,13 +57,15 @@ function createRenderer() {
 
 }
 
-function animate(){
-
-    window.requestAnimationFrame(animate);
+function update() {
 
     mesh.rotation.z += 0.01;
     mesh.rotation.x += 0.01;
     mesh.rotation.y += 0.01;
+
+}
+
+function render() {
 
     renderer.render(scene, camera);
 
