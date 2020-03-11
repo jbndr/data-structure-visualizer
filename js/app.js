@@ -7,7 +7,21 @@ let scene;
 let root;
 let points = [];
 
+let appearance;
+
+class Appearance {
+    constructor(backgroundColor = 0x202632, strokeColor = 0x00BFA5, pointColor = 0xFFFFFF, pointSize = 3, rotate = false){
+        this.backgroundColor = backgroundColor;
+        this.strokeColor = strokeColor;
+        this.pointColor = pointColor;
+        this.pointSize = pointSize;
+        this.rotate = rotate;
+    }
+} 
+
 function init() {
+
+    appearance = new Appearance();
 
     root = new Octree(new Boundary(new Point(0, 0, 0), 128, 128, 128), 5);
     var maxX = root.boundary.center.x + root.boundary.width / 2;
@@ -17,30 +31,66 @@ function init() {
     var maxZ = root.boundary.center.z - root.boundary.depth / 2;
     var minZ = root.boundary.center.z + root.boundary.depth / 2;
 
-    for (var i = 0; i < 15; i++){
+    for (var i = 0; i < 200; i++){
         var x = Math.random() * (maxX - minX) + minX;
         var y = Math.random() * (maxY - minY) + minY;
         var z = Math.random() * (maxZ - minZ) + minZ;
         root.insert(new Point(x, y, z))
     }
 
-    console.log(root);
-
     container = document.querySelector('#scene-container');
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000); //0x202632
+    scene.background = new THREE.Color(appearance.backgroundColor);
 
     createCamera();
     createControls();
     createMeshes();
     createRenderer();
+    createGUI();
 
     renderer.setAnimationLoop( () => {
         update();
         render();
       } );
 
+}
+
+function createGUI() {
+
+    var gui = new dat.GUI();
+
+    var f1 = gui.addFolder('Appearance');
+    f1.addColor(appearance, 'backgroundColor').onChange(() => {
+        scene.background = new THREE.Color(appearance.backgroundColor);
+    });
+    f1.addColor(appearance, 'strokeColor').onChange(() => {
+        for (var i = 0; i < scene.children.length; i++){
+            currentType = scene.children[i].type;
+            if (currentType == "LineSegments"){
+                scene.children[i].material.color = new THREE.Color(appearance.strokeColor);
+            }
+        }
+    });
+    f1.addColor(appearance, 'pointColor').onChange(() => {
+        for (var i = 0; i < scene.children.length; i++){
+            currentType = scene.children[i].type;
+            if (currentType == "Points"){
+                scene.children[i].material.color = new THREE.Color(appearance.pointColor);
+            }
+        }
+    });
+    f1.add(appearance, 'pointSize', 1, 10).onChange(() => {
+        for (var i = 0; i < scene.children.length; i++){
+            currentType = scene.children[i].type;
+            if (currentType == "Points"){
+                scene.children[i].material.size = appearance.pointSize;
+            }
+        }
+    });
+    f1.add(appearance, 'rotate');
+
+    f1.open();
 }
 
 function createCamera() {
@@ -77,7 +127,7 @@ function createQuadTreeMeshes(quad){
     const geometry = new THREE.BoxBufferGeometry(width, height, depth);
 
     const edges = new THREE.EdgesGeometry(geometry);
-    line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: 0x00BFA5} ));
+    line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: appearance.strokeColor} ));
     scene.add(line);
 
     const center = quad.boundary.center;
@@ -96,10 +146,10 @@ function createQuadTreeMeshes(quad){
 function createPoints() {
 
     var geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3 ));
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
     geometry.computeBoundingSphere();
 
-    var material = new THREE.PointsMaterial({size: 3});
+    var material = new THREE.PointsMaterial({size: appearance.pointSize, color: appearance.pointColor});
     
     points = new THREE.Points(geometry, material);
     scene.add(points);
@@ -118,6 +168,9 @@ function createRenderer() {
 
 function update() {
 
+    if(appearance.rotate){
+        scene.rotateY(0.005);
+    }
 
 }
 
@@ -139,4 +192,3 @@ function onWindowResize() {
 
 window.addEventListener('resize', onWindowResize);
 init();
-
