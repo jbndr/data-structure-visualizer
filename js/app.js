@@ -50,9 +50,6 @@ function createRenderer() {
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(window.devicePixelRatio);
 
-    renderer.gammaFactor = 2.2;
-    renderer.gammaOutput = true;
-
     container.appendChild(renderer.domElement);
 
 }
@@ -71,5 +68,16 @@ function render() {
 
 }
 
+
+function onWindowResize() {
+
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  
+}
+
+window.addEventListener('resize', onWindowResize);
 init();
-animate();
+
