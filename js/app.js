@@ -9,6 +9,8 @@ let points = [];
 
 let appearance;
 
+var stats;
+
 class Appearance {
     constructor(backgroundColor = 0x202632, strokeColor = 0x00BFA5, pointColor = 0xFFFFFF, pointSize = 3, rotate = false){
         this.backgroundColor = backgroundColor;
@@ -22,6 +24,9 @@ class Appearance {
 function init() {
 
     appearance = new Appearance();
+    stats = new Stats();
+    stats.showPanel(0);
+    document.body.appendChild(stats.dom);
 
     root = new Octree(new Boundary(new Point(0, 0, 0), 128, 128, 128), 5);
     var maxX = root.boundary.center.x + root.boundary.width / 2;
@@ -50,8 +55,10 @@ function init() {
     createGUI();
 
     renderer.setAnimationLoop( () => {
+        stats.begin();
         update();
         render();
+        stats.end();
       } );
 
 }
