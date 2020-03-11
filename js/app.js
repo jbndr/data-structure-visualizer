@@ -1,5 +1,6 @@
 let container;
 let camera;
+let controls;
 let renderer;
 let scene;
 let mesh;
@@ -12,6 +13,7 @@ function init() {
     scene.background = new THREE.Color('gray');
 
     createCamera();
+    createControls();
     createMeshes();
     createRenderer();
 
@@ -32,6 +34,12 @@ function createCamera() {
     camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     camera.position.set(0, 0, 10);
 
+}
+
+function createControls() {
+
+    controls = new THREE.OrbitControls(camera, container);
+  
 }
 
 function createMeshes() {
@@ -56,9 +64,7 @@ function createRenderer() {
 
 function update() {
 
-    mesh.rotation.z += 0.01;
-    mesh.rotation.x += 0.01;
-    mesh.rotation.y += 0.01;
+    mesh.geometry.rotateY(0.05);
 
 }
 
