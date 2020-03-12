@@ -9,10 +9,11 @@ let points = [];
 
 let appearance;
 
-var stats;
+let stats;
+let clock;
 
 class Appearance {
-    constructor(backgroundColor = 0x202632, strokeColor = 0x00BFA5, pointColor = 0xFFFFFF, pointSize = 3, rotate = false){
+    constructor(backgroundColor = 0x10307, strokeColor = 0x00BFA5, pointColor = 0xFFFFFF, pointSize = 3, rotate = false){
         this.backgroundColor = backgroundColor;
         this.strokeColor = strokeColor;
         this.pointColor = pointColor;
@@ -24,9 +25,31 @@ class Appearance {
 function init() {
 
     appearance = new Appearance();
-    stats = new Stats();
-    stats.showPanel(0);
-    document.body.appendChild(stats.dom);
+    clock = new THREE.Clock();
+
+    container = document.querySelector('#scene-container');
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(appearance.backgroundColor);
+
+    createRoot();
+    createStats();
+    createCamera();
+    createControls();
+    createMeshes();
+    createRenderer();
+    createGUI();
+
+    renderer.setAnimationLoop( () => {
+        stats.begin();
+        update();
+        render();
+        stats.end();
+      } );
+
+}
+
+function createRoot() {
 
     root = new Octree(new Boundary(new Point(0, 0, 0), 128, 128, 128), 5);
     var maxX = root.boundary.center.x + root.boundary.width / 2;
@@ -42,24 +65,14 @@ function init() {
         var z = Math.random() * (maxZ - minZ) + minZ;
         root.insert(new Point(x, y, z))
     }
+    
+}
 
-    container = document.querySelector('#scene-container');
+function createStats() {
 
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(appearance.backgroundColor);
-
-    createCamera();
-    createControls();
-    createMeshes();
-    createRenderer();
-    createGUI();
-
-    renderer.setAnimationLoop( () => {
-        stats.begin();
-        update();
-        render();
-        stats.end();
-      } );
+    stats = new Stats();
+    stats.showPanel(0);
+    document.body.appendChild(stats.dom);
 
 }
 
@@ -105,7 +118,7 @@ function createCamera() {
     const fov = 35; 
     const aspect = container.clientWidth / container.clientHeight;
     const near = 0.1; 
-    const far = 1000;
+    const far = 3500;
     
     camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     camera.position.set(0, 0, 350);
@@ -176,7 +189,8 @@ function createRenderer() {
 function update() {
 
     if(appearance.rotate){
-        scene.rotateY(0.005);
+        delta = clock.getDelta()
+        scene.rotateY(delta * 0.1);
     }
 
 }
