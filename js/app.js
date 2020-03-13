@@ -5,27 +5,41 @@ let renderer;
 let scene;
 
 let root;
-let points = [];
+let pointsArray;
+let centerArray = [];
 
 let appearance;
 
 let stats;
-let clock;
+
+let maxX;
+let minX;
+let maxY;
+let minY;
+let maxZ;
+let minZ;
+
+var shouldUpdate = false;
+
+const datastructures = {
+    OCTREE: 1,
+    KDTREE: 2
+}
+
+let datastructure = datastructures.OCTREE;
 
 class Appearance {
-    constructor(backgroundColor = 0x10307, strokeColor = 0x00BFA5, pointColor = 0xFFFFFF, pointSize = 3, rotate = false){
+    constructor(backgroundColor = 0x10307, strokeColor = 0x00BFA5, pointColor = 0xFFFFFF, pointSize = 3){
         this.backgroundColor = backgroundColor;
         this.strokeColor = strokeColor;
         this.pointColor = pointColor;
         this.pointSize = pointSize;
-        this.rotate = rotate;
     }
 } 
 
 function init() {
 
     appearance = new Appearance();
-    clock = new THREE.Clock();
 
     container = document.querySelector('#scene-container');
 
@@ -52,20 +66,13 @@ function init() {
 function createRoot() {
 
     root = new Octree(new Boundary(new Point(0, 0, 0), 128, 128, 128), 5);
-    var maxX = root.boundary.center.x + root.boundary.width / 2;
-    var minX = root.boundary.center.x - root.boundary.width / 2;
-    var maxY = root.boundary.center.y + root.boundary.height / 2;
-    var minY = root.boundary.center.y - root.boundary.height / 2;
-    var maxZ = root.boundary.center.z - root.boundary.depth / 2;
-    var minZ = root.boundary.center.z + root.boundary.depth / 2;
+    maxX = root.boundary.center.x + root.boundary.width / 2;
+    minX = root.boundary.center.x - root.boundary.width / 2;
+    maxY = root.boundary.center.y + root.boundary.height / 2;
+    minY = root.boundary.center.y - root.boundary.height / 2;
+    maxZ = root.boundary.center.z - root.boundary.depth / 2;
+    minZ = root.boundary.center.z + root.boundary.depth / 2;
 
-    for (var i = 0; i < 200; i++){
-        var x = Math.random() * (maxX - minX) + minX;
-        var y = Math.random() * (maxY - minY) + minY;
-        var z = Math.random() * (maxZ - minZ) + minZ;
-        root.insert(new Point(x, y, z))
-    }
-    
 }
 
 function createStats() {
@@ -108,7 +115,6 @@ function createGUI() {
             }
         }
     });
-    f1.add(appearance, 'rotate');
 
     f1.open();
 }
@@ -132,29 +138,44 @@ function createControls() {
 }
 
 function createMeshes() {
+ 
+    pointsArray = [];
 
-    createQuadTreeMeshes(root);
+    switch (datastructure) {
+        case datastructures.OCTREE:
+            createQuadTreeMeshes(root);
+            break;
+
+        case datastructures.KDTREE:
+            break;
+    
+        default:
+            break;
+    }
+
     createPoints();
 
 }
 
 function createQuadTreeMeshes(quad){
 
-    const height = quad.boundary.width;
-    const width = quad.boundary.height;
-    const depth = quad.boundary.depth;
-
-    const geometry = new THREE.BoxBufferGeometry(width, height, depth);
-
-    const edges = new THREE.EdgesGeometry(geometry);
-    line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial( { color: appearance.strokeColor} ));
-    scene.add(line);
-
     const center = quad.boundary.center;
-    line.position.set(center.x, center.y, center.z);
+    if (!centerArray.includes(center)){
+        const height = quad.boundary.width;
+        const width = quad.boundary.height;
+        const depth = quad.boundary.depth;
+    
+        const geometry = new THREE.BoxBufferGeometry(width, height, depth);
+    
+        const edges = new THREE.EdgesGeometry(geometry);
+        line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: appearance.strokeColor}));
+        line.position.set(center.x, center.y, center.z);
+        scene.add(line);
+        centerArray.push(center);
+    }
 
     quad.points.forEach(point => {
-        points.push(point.x, point.y, point.z);
+        pointsArray.push(point.x, point.y, point.z);
     });
 
     quad.children.forEach(child => {
@@ -165,8 +186,12 @@ function createQuadTreeMeshes(quad){
 
 function createPoints() {
 
+    if (pointsArray.length == 0){
+        return;
+    }
+
     var geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(pointsArray, 3));
     geometry.computeBoundingSphere();
 
     var material = new THREE.PointsMaterial({size: appearance.pointSize, color: appearance.pointColor});
@@ -188,9 +213,9 @@ function createRenderer() {
 
 function update() {
 
-    if(appearance.rotate){
-        delta = clock.getDelta()
-        scene.rotateY(delta * 0.1);
+    if (shouldUpdate){
+        shouldUpdate = false;
+        createMeshes();
     }
 
 }
@@ -211,5 +236,18 @@ function onWindowResize() {
   
 }
 
+function onKeyDown(event){
+    // p == 80
+    if (event.which == 80){
+        let x = Math.random() * (maxX - minX) + minX;
+        let y = Math.random() * (maxY - minY) + minY;
+        let z = Math.random() * (maxZ - minZ) + minZ;
+        root.insert(new Point(x, y, z));
+        shouldUpdate = true;
+    }
+}
+
 window.addEventListener('resize', onWindowResize);
+window.addEventListener('keydown', onKeyDown);
+
 init();
