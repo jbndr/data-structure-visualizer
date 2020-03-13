@@ -9,6 +9,10 @@ let pointsArray;
 let centerArray = [];
 
 let appearance;
+let description;
+let pointInfo;
+let infoContainer;
+let hideInfo;
 
 let stats;
 
@@ -22,8 +26,8 @@ let minZ;
 var shouldUpdate = false;
 
 const datastructures = {
-    OCTREE: 1,
-    KDTREE: 2
+    OCTREE: "Octree",
+    KDTREE: "Kd-Tree"
 }
 
 let datastructure = datastructures.OCTREE;
@@ -42,6 +46,10 @@ function init() {
     appearance = new Appearance();
 
     container = document.querySelector('#scene-container');
+    description = document.querySelector('#info');
+    infoContainer = document.querySelector('#info-container');
+    pointInfo = document.querySelector('#point-info');
+    hideInfo = document.querySelector('#hide-info');
 
     scene = new THREE.Scene();
     scene.background = new THREE.Color(appearance.backgroundColor);
@@ -81,9 +89,12 @@ function createStats() {
     stats.showPanel(0);
     document.body.appendChild(stats.dom);
 
+
 }
 
 function createGUI() {
+
+    description.innerHTML = datastructure;
 
     var gui = new dat.GUI();
 
@@ -116,7 +127,6 @@ function createGUI() {
         }
     });
 
-    f1.open();
 }
 
 function createCamera() {
@@ -127,7 +137,7 @@ function createCamera() {
     const far = 3500;
     
     camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    camera.position.set(0, 0, 350);
+    camera.position.set(0, 0, 375);
 
 }
 
@@ -237,13 +247,26 @@ function onWindowResize() {
 }
 
 function onKeyDown(event){
-    // p == 80
+
+    // p == 80: create new point
     if (event.which == 80){
         let x = Math.random() * (maxX - minX) + minX;
         let y = Math.random() * (maxY - minY) + minY;
         let z = Math.random() * (maxZ - minZ) + minZ;
         root.insert(new Point(x, y, z));
         shouldUpdate = true;
+        pointMessage = `Point (${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}) has been added.`;
+        pointInfo.innerHTML = pointMessage;
+    } else if (event.which == 72){ // h == 72: hide ui elements
+        if(infoContainer.style.visibility != "hidden"){
+            infoContainer.style.visibility = "hidden";
+            hideInfo.style.visibility = "hidden";
+            document.body.removeChild(stats.dom);
+        } else {
+            infoContainer.style.visibility = "visible";
+            hideInfo.style.visibility = "visible";
+            document.body.appendChild(stats.dom);
+        }
     }
 }
 
