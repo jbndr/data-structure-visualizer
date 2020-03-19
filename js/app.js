@@ -264,7 +264,6 @@ function onKeyDown(event){
             document.body.removeChild(stats.dom);
         } else {
             infoContainer.style.visibility = "visible";
-            hideInfo.style.visibility = "visible";
             document.body.appendChild(stats.dom);
         }
     }
