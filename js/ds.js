@@ -34,9 +34,10 @@ class Octree {
     points = [];
     isSubdivided = false;
 
-    constructor(boundary, capacity){
+    constructor(boundary, capacity, showCallback){
         this.boundary = boundary;
         this.capacity = capacity;
+        this.showCallback = showCallback;
     }
 
     subdivide(){
@@ -50,9 +51,10 @@ class Octree {
                     var newCenter = new Point(newX, newY, newZ);
                     var newBoundary = new Boundary(newCenter, this.boundary.width / 2,
                          this.boundary.height / 2, this.boundary.depth / 2);
-                    var newQuad = new Octree(newBoundary, this.capacity);
+                    var newQuad = new Octree(newBoundary, this.capacity, this.showCallback);
                     newQuad.insertAll(this.points);
                     this.children.push(newQuad);
+                    this.showCallback(newQuad);
                 }
             }
         }
